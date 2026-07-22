@@ -7,14 +7,24 @@ let currentMode = 'relax';
 let effectInterval;
 let resultTimer;
 
-// Dados de Desafios (Década de 70 pra trás - Exemplos)
+// Músicas de amostra para simular a busca no YouTube (com IDs reais e thumbnails)
+const sampleSongs = [
+    { title: "Evidências - Chitãozinho & Xororó (Karaokê)", videoId: "hA2kCskO-7g" },
+    { title: "Musa do Verão - Felipe Dylon (Karaokê)", videoId: "I_Y1fE38E3k" },
+    { title: "Bohemian Rhapsody - Queen (Karaoke)", videoId: "fJ9rUzIMcZQ" },
+    { title: "Anna Júlia - Los Hermanos (Karaokê)", videoId: "G3qT6L11oI4" },
+    { title: "Fogo e Paixão - Wando (Karaokê)", videoId: "9qJp3O3VjYc" },
+    { title: "Borbulhas de Amor - Fagner (Karaokê)", videoId: "c_qA5d_gY_E" }
+];
+
+// Dados de Desafios (Década de 70 pra trás)
 const retroChallenges = [
     { q: "Em que ano o homem pisou na Lua pela primeira vez?", ops: ["1965", "1969", "1971"], a: 1 },
     { q: "Qual banda lançou o álbum 'The Dark Side of the Moon' em 1973?", ops: ["Led Zeppelin", "Pink Floyd", "The Beatles"], a: 1 },
     { q: "Quem era conhecido como o 'Rei do Rock'?", ops: ["Chuck Berry", "Elvis Presley", "Little Richard"], a: 1 }
 ];
 
-// Comentários da Zoira (Para notas baixas/médias)
+// Comentários da Zoira
 const roastComments = [
     "Meus ouvidos estão sangrando, mas a performance foi top.",
     "Você canta bem... bem longe de mim.",
@@ -35,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
-    // Limpa qualquer efeito ou timer ativo ao mudar de tela
     clearGameEffects();
     clearTimeout(resultTimer);
 }
@@ -54,9 +63,7 @@ function setupEventListeners() {
     document.getElementById('btn-back-settings').addEventListener('click', () => showScreen('screen-players'));
 
     // Seleção de Música
-    document.getElementById('yt-search').addEventListener('keypress', (e) => {
-        if(e.key === 'Enter') simulateYTSearch();
-    });
+    document.getElementById('yt-search').addEventListener('input', simulateYTSearch);
     document.getElementById('start-show').addEventListener('click', startShow);
 
     // Seleção de Modo
@@ -72,7 +79,7 @@ function setupEventListeners() {
     document.getElementById('btn-pause').addEventListener('click', togglePause);
     document.getElementById('resume-song').addEventListener('click', togglePause);
     document.getElementById('go-to-main').addEventListener('click', () => { togglePause(); showScreen('screen-select-song'); });
-    document.getElementById('btn-exit').addEventListener('click', () => { if(ytPlayer) ytPlayer.stopVideo(); showScreen('screen-select-song'); });
+    document.getElementById('btn-exit').addEventListener('click', () => { if(ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo(); showScreen('screen-select-song'); });
     document.getElementById('btn-skip-turn').addEventListener('click', showChallenge);
 }
 
@@ -109,10 +116,8 @@ function updatePlayersLists() {
     listMain.innerHTML = ''; listConfig.innerHTML = '';
 
     players.forEach(p => {
-        // Lista na tela de cadastro
         listMain.innerHTML += `<li class="player-item">${p.name}</li>`;
         
-        // Lista na tela de configurações (com apagar/editar)
         const li = document.createElement('li');
         li.className = 'player-item';
         li.innerHTML = `<span>${p.name}</span> 
@@ -134,23 +139,52 @@ function editPlayer(id) {
     }
 }
 
-// --- FILA E SELEÇÃO DE MÚSICA (SIMULADO) ---
+// --- EXTRAÇÃO DE ID DO YOUTUBE ---
+function extractVideoId(urlOrText) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = urlOrText.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// --- FILA E SELEÇÃO DE MÚSICA COM MINIATURAS ---
 function simulateYTSearch() {
-    const query = document.getElementById('yt-search').value;
+    const query = document.getElementById('yt-search').value.trim();
     const results = document.getElementById('search-results');
     results.innerHTML = '';
-    
-    // Simulação de 3 resultados baseados na busca
-    for(let i=1; i<=3; i++) {
-        const title = `${query} - Karaokê Version ${i}`;
-        const vidId = 'dQw4w9WgXcQ'; // Rick Roll de exemplo pra tudo
-        results.innerHTML += `
-            <div class="song-item">
-                <span>${title}</span>
-                <button onclick="addToQueue('${title}', '${vidId}')">➕ Add</button>
+
+    if (!query) return;
+
+    // Se o usuário colou um link do YouTube
+    const extractedId = extractVideoId(query);
+    if (extractedId) {
+        const thumbUrl = `https://img.youtube.com/vi/${extractedId}/hqdefault.jpg`;
+        results.innerHTML = `
+            <div class="song-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <img src="${thumbUrl}" alt="Capá" style="width: 80px; height: 60px; object-fit: cover; border-radius: 5px;">
+                <div style="flex: 1;">
+                    <strong>Vídeo por Link Directo</strong><br>
+                    <small>ID: ${extractedId}</small>
+                </div>
+                <button onclick="addToQueue('Vídeo Personalizado (${extractedId})', '${extractedId}')">➕ Add</button>
             </div>
         `;
+        return;
     }
+
+    // Busca filtrada das músicas de amostra
+    const filtered = sampleSongs.filter(s => s.title.toLowerCase().includes(query.toLowerCase()));
+    const listToDisplay = filtered.length > 0 ? filtered : sampleSongs;
+
+    listToDisplay.forEach(song => {
+        const thumbUrl = `https://img.youtube.com/vi/${song.videoId}/hqdefault.jpg`;
+        results.innerHTML += `
+            <div class="song-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <img src="${thumbUrl}" alt="${song.title}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 5px;">
+                <span style="flex: 1; text-align: left;">${song.title}</span>
+                <button onclick="addToQueue('${song.title.replace(/'/g, "\\'")}', '${song.videoId}')">➕ Add</button>
+            </div>
+        `;
+    });
 }
 
 function addToQueue(title, videoId) {
@@ -162,7 +196,13 @@ function updateQueueList() {
     const list = document.getElementById('queue-list');
     list.innerHTML = '';
     queue.forEach((s, index) => {
-        list.innerHTML += `<li class="song-item">${index+1}. ${s.title}</li>`;
+        const thumbUrl = `https://img.youtube.com/vi/${s.videoId}/hqdefault.jpg`;
+        list.innerHTML += `
+            <li class="song-item" style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                <span>${index + 1}.</span>
+                <img src="${thumbUrl}" alt="${s.title}" style="width: 50px; height: 38px; object-fit: cover; border-radius: 3px;">
+                <span style="flex: 1; text-align: left;">${s.title}</span>
+            </li>`;
     });
 }
 
@@ -174,14 +214,12 @@ function startShow() {
         queue = queue.sort(() => Math.random() - 0.5);
         updateQueueList();
     }
-    setupYoutubePlayer(); // Inicializa a API
+    setupYoutubePlayer();
     prepareNextSinger();
 }
 
 // --- LÓGICA DO PLAYER E MINIGAMES ---
-function onYouTubeIframeAPIReady() {
-    // Função exigida pela API, mas vamos criar o player sob demanda
-}
+function onYouTubeIframeAPIReady() {}
 
 function setupYoutubePlayer() {
     if (!ytPlayer) {
@@ -206,18 +244,14 @@ function prepareNextSinger() {
 function startCurrentSong() {
     showScreen('screen-player');
     const song = queue[currentQueueIndex];
-    // Se o player já existe, carrega o vídeo. Se não, a API vai carregar no setupYoutubePlayer
     if (ytPlayer && ytPlayer.loadVideoById) {
         ytPlayer.loadVideoById(song.videoId);
     } else {
-        // Gambiarra necessária caso a API demore a carregar
         setTimeout(() => ytPlayer.loadVideoById(song.videoId), 1000);
     }
 }
 
-function onPlayerReady(event) {
-    // Player pronto, mas só damos play quando escolher o modo
-}
+function onPlayerReady(event) {}
 
 function onPlayerStateChange(event) {
     if (event.data === YT.PlayerState.PLAYING) {
@@ -226,13 +260,13 @@ function onPlayerStateChange(event) {
         clearGameEffects();
         showResult();
     } else if (event.data === YT.PlayerState.PAUSED) {
-        clearGameEffects(); // Para os efeitos se pausar
+        clearGameEffects();
     }
 }
 
 function skipSong() {
-    if(ytPlayer) ytPlayer.stopVideo();
-    showResult(); // Vai pro resultado da música atual
+    if(ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
+    showResult();
 }
 
 function togglePause() {
@@ -253,18 +287,15 @@ function activateGameEffects() {
     const overlay = document.getElementById('player-overlay');
     
     if (currentMode === 'garagem') {
-        // Flicker: Aleatório a cada 15s, dura até 5s
         effectInterval = setInterval(() => {
-            if(Math.random() > 0.5) { // 50% de chance de rolar a cada ciclo
+            if(Math.random() > 0.5) {
                 overlay.classList.add('effect-flicker');
                 setTimeout(() => overlay.classList.remove('effect-flicker'), Math.random() * 4000 + 1000);
             }
         }, 15000);
     } else if (currentMode === 'chuveiro') {
-        // Chuveiro: Efeito constante (ou poderia ser aleatório também)
         overlay.classList.add('effect-blur-invert');
     } else if (currentMode === 'profissional') {
-        // Blackout: A cada 40s, dura 5s (usando a lógica pedida)
         effectInterval = setInterval(() => {
              overlay.classList.add('effect-blackout');
              setTimeout(() => overlay.classList.remove('effect-blackout'), 5000);
@@ -275,24 +306,21 @@ function activateGameEffects() {
 function clearGameEffects() {
     clearInterval(effectInterval);
     const overlay = document.getElementById('player-overlay');
-    overlay.className = ''; // Remove todas as classes de efeito
+    overlay.className = '';
 }
 
-// --- TELA DE RESULTADO (A NOTA E A ZOIRA) ---
+// --- TELA DE RESULTADO ---
 function showResult() {
     showScreen('screen-result');
     const singer = players[currentQueueIndex % players.length];
     let score = 0;
     let comment = "";
 
-    // Lógica Especial para "Cabelo" ou "Lucas Cabelo"
     if (singer.name.toLowerCase().includes('cabelo')) {
-        score = 100; // Nota Máxima
+        score = 100;
         comment = `Sabemos que você canta mal pra caramba ${singer.name}, mas a empolgação foi nota 100! O CabelOKÊ te ama! 🔥`;
     } else {
-        // Nota Aleatória entre 10 e 95 (pra nunca dar 100)
         score = Math.floor(Math.random() * 85) + 10;
-        
         if (score > 80) comment = "Até que não foi tão ruim. Me surpreendeu.";
         else if (score > 50) comment = "Ficou na média. Dá pra melhorar pro próximo churrasco.";
         else comment = roastComments[Math.floor(Math.random() * roastComments.length)];
@@ -302,7 +330,6 @@ function showResult() {
     document.getElementById('res-score').innerText = score;
     document.getElementById('res-comment').innerText = comment;
 
-    // Timer de 10 segundos para a próxima música
     resultTimer = setTimeout(nextTurn, 10000);
 }
 
@@ -311,7 +338,6 @@ function nextTurn() {
     if (currentQueueIndex < queue.length) {
         prepareNextSinger();
     } else {
-        // Acabaram as músicas
         alert("O Show acabou! Adicione mais veneno na fila.");
         queue = [];
         updateQueueList();
@@ -323,7 +349,7 @@ function nextTurn() {
 let currentChallengeAnswer = -1;
 
 function showChallenge() {
-    if(ytPlayer) ytPlayer.pauseVideo(); // Pausa a música
+    if(ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
     const modal = document.getElementById('challenge-modal');
     const challenge = retroChallenges[Math.floor(Math.random() * retroChallenges.length)];
     
@@ -348,22 +374,26 @@ function checkChallengeAnswer(selectedIndex) {
     resultP.classList.remove('hidden');
     const modalContent = document.querySelector('#challenge-modal .modal-content');
 
+    // Desabilita os botões para evitar múltiplos cliques
+    document.querySelectorAll('#challenge-options button').forEach(b => b.disabled = true);
+
     if (selectedIndex === currentChallengeAnswer) {
-        resultP.innerText = "Acertou! Pulando para o próximo...";
+        resultP.innerText = "Acertou! Pulando para a próxima pessoa...";
         resultP.style.color = "var(--primary-color)";
         setTimeout(() => {
             document.getElementById('challenge-modal').classList.add('hidden');
-            skipSong(); // Pula a música atual (vai pro resultado e depois próximo)
-        }, 2000);
+            skipSong();
+        }, 3000);
     } else {
-        resultP.innerText = "ERROU! JÁ SABE NE? VAI TER QUE BEBER! 🍻🍺";
+        resultP.innerText = "ERROU! VAI TER QUE BEBER! 🍻🍺";
         resultP.style.color = "var(--secondary-color)";
-        // Efeito de piscar vermelho pra zoar
         modalContent.style.borderColor = "var(--secondary-color)";
+        
+        // Fecha automaticamente a janela após 3 segundos e retoma a música
         setTimeout(() => {
              document.getElementById('challenge-modal').classList.add('hidden');
              modalContent.style.borderColor = "var(--primary-color)";
-             ytPlayer.playVideo(); // Volta a música, ele tem que terminar de cantar
-        }, 4000);
+             if(ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        }, 3000);
     }
 }
