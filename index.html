@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CabelOKÊ - O Karaokê Lendário</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ============================================= -->
+    <!-- TELA 1: INTRO (Aguardando sua imagem/logo) -->
+    <!-- ============================================= -->
+    <div id="screen-intro" class="screen active">
+        <div class="intro-content">
+            <!-- AQUI VAI ENTRAR SUA IMAGEM/LOGO E ANIMAÇÃO -->
+            <img src="logo.png" alt="CabelOKÊ Logo" class="logo-animation"> 
+            <h1 class="blink-text">Toque para Iniciar</h1>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- TELA 2: CADASTRO DE JOGADORES -->
+    <!-- ============================================= -->
+    <div id="screen-players" class="screen">
+        <h2>Quem vai passar vergonha? 🎤</h2>
+        <div class="player-input-group">
+            <input type="text" id="player-name" placeholder="Nome do artista...">
+            <button id="add-player">+</button>
+        </div>
+        <ul id="players-list"></ul>
+        <button id="start-app" class="btn-main" disabled>Tudo pronto!</button>
+        <button id="btn-config" class="btn-sec">⚙️ Configurações</button>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- TELA 3: SELEÇÃO DE MÚSICA (E FILA) -->
+    <!-- ============================================= -->
+    <div id="screen-select-song" class="screen">
+        <h2>Escolha seu veneno</h2>
+        
+        <div class="selection-container">
+            <!-- Busca YouTube (Simulação) -->
+            <div class="search-group">
+                <input type="text" id="yt-search" placeholder="Buscar no YouTube...">
+                <div id="search-results" class="results-list"></div>
+            </div>
+
+            <!-- Link Playlist -->
+            <div class="playlist-group">
+                <input type="text" id="playlist-link" placeholder="Link da Playlist do YouTube">
+            </div>
+        </div>
+
+        <div class="queue-container">
+            <h3>Fila de Reprodução</h3>
+            <ul id="queue-list"></ul>
+        </div>
+
+        <div class="options-group">
+            <label class="switch">
+                <input type="checkbox" id="shuffle-mode">
+                <span class="slider round"></span>
+            </label>
+            <span>Modo Aleatório</span>
+        </div>
+
+        <button id="start-show" class="btn-main">Iniciar Show! 🔥</button>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- TELA 4: SELEÇÃO DE MODO (MINIGAMES) -->
+    <!-- ============================================= -->
+    <div id="screen-modes" class="screen">
+        <h2 id="next-singer-title">Preparado, [Nome]?</h2>
+        <p>Escolha seu nível de sofrimento:</p>
+        <div class="modes-grid">
+            <button class="btn-mode" data-mode="relax">😌 Relax</button>
+            <button class="btn-mode" data-mode="garagem">🎸 Banda Garagem (Flicker)</button>
+            <button class="btn-mode" data-mode="chuveiro">🚿 Chuveiro (Distorção)</button>
+            <button class="btn-mode" data-mode="profissional">🕶️ Profissional do CabelOKÊ (Apagão)</button>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- TELA 5: PLAYER DE VÍDEO (A ARENA) -->
+    <!-- ============================================= -->
+    <div id="screen-player" class="screen player-screen">
+        <!-- Overlay para os efeitos dos minigames -->
+        <div id="player-overlay"></div>
+        
+        <!-- API do YouTube vai carregar aqui -->
+        <div id="youtube-player"></div>
+
+        <div class="player-controls">
+            <button id="btn-skip">Pular 👉</button>
+            <button id="btn-skip-turn">Passar a vez (Desafio) 🎲</button>
+            <button id="btn-pause">Pausar ||</button>
+            <button id="btn-exit">Sair 🚪</button>
+        </div>
+
+        <!-- Menu de Pausa -->
+        <div id="pause-menu" class="modal hidden">
+            <div class="modal-content">
+                <h3>Pausado</h3>
+                <button id="resume-song">Continuar</button>
+                <button id="go-to-main">Menu Inicial</button>
+            </div>
+        </div>
+
+        <!-- Modal do Desafio (Pular a vez) -->
+        <div id="challenge-modal" class="modal hidden">
+            <div class="modal-content challenge-content">
+                <h3>Desafio Retrô! 🕰️</h3>
+                <p id="challenge-question"></p>
+                <div id="challenge-options"></div>
+                <p id="challenge-result" class="hidden"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- TELA 6: RESULTADO (A HORA DA ZOIRA) -->
+    <!-- ============================================= -->
+    <div id="screen-result" class="screen result-screen">
+        <h1 id="res-player-name"></h1>
+        <div class="score-circle">
+            <span id="res-score"></span>
+        </div>
+        <p id="res-comment" class="comment"></p>
+        <p class="next-msg">Próxima música em 10s...</p>
+    </div>
+
+    <!-- ============================================= -->
+    <!-- TELA 7: CONFIGURAÇÕES (GERENCIAR JOGADORES) -->
+    <!-- ============================================= -->
+    <div id="screen-settings" class="screen">
+        <h2>Gerenciar Artistas</h2>
+        <ul id="manage-players-list"></ul>
+        <button id="btn-back-settings" class="btn-sec">Voltar</button>
+    </div>
+
+    <!-- Carrega o script do YouTube e o nosso script -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="script.js"></script>
+</body>
+</html>
